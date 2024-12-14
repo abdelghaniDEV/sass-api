@@ -26,9 +26,13 @@ const getAllMenus = asyncWraper(async (req, res) => {
 // get menu by ID
 const getSingleMenu = asyncWraper(async (req, res) => {
   const prams = req.params.menuID;
-  const menu = await Menu.findById(prams)
-    .populate("restaurantId")
-    .populate("products");
+  const menu = await Menu.findById(prams).populate('restaurantId').populate({
+    path: 'products',
+    populate: {
+      path: 'categoryId',
+      select: 'name menuId',
+    }
+  }).populate('categorys')
   res.json({ status: "success", data: { menu: menu } });
 });
 

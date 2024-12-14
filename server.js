@@ -3,6 +3,7 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 require('dotenv').config()
 const app = express()
+const cron = require('node-cron');
 
 const PORT = process.env.PORT || 4000;
 
@@ -18,7 +19,8 @@ const usersRouter = require ('./router/user.router.js')
 const restaurantRouter = require ('./router/restaurant.router.js')
 const menuRouter = require('./router/menu.router.js')
 const productRouter = require('./router/product.router.js')
-const categoryRouter = require("./router/category.router.js")
+const categoryRouter = require("./router/category.router.js");
+const { checkExpiredSubscriptions } = require('./cron/subscriptionCron.js');
 
 
 
@@ -27,6 +29,13 @@ app.use("/api/restaurants" , restaurantRouter )
 app.use("/api/menus" , menuRouter)
 app.use("/api/products" , productRouter)
 app.use("/api/categories" , categoryRouter)
+
+// cron.schedule('* * * * *', () => {
+//     console.log('📅 هذه الوظيفة تعمل كل دقيقة (للاختبار فقط)');
+//   });
+  
+
+// checkExpiredSubscriptions()
 
 
 
