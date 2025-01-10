@@ -125,6 +125,7 @@ const updateMenusByRestaurantId = asyncWraper(async (req, res) => {
     "template.fontFamily": req.body.fontFamily,
     "template.language": req.body.language,
     "template.currency": req.body.currency,
+    "template.showBanner" : req.body.showBanner
   };
 
   // إذا كان هناك صورة مرفوعة (banner)

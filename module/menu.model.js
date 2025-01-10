@@ -11,6 +11,7 @@ const MenuSchema = new mongoose.Schema(
     description: { type: String, required: false },
     template: {
       banner: { type: String, required: false },
+      showBanner: { type: Boolean, required: false},
       primaryColor: { type: String, required: false, default: "#F56949" },
       BackgroundColor: { type: String, required: false, default: "#ffffff" },
       textColor: { type: String, required: false, default: "#000000" },
