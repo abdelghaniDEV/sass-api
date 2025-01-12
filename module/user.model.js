@@ -13,6 +13,11 @@ const UserSchema = new mongoose.Schema({
     amountPaid: { type: Number, default: 0 }, // المبلغ المدفوع للخطة
   },
   isInfoAvailable : { type: Boolean, default: false},
+  verifyOtp : {type : String, default: ''},
+  verifyOtpExpireAt : {type : Number, default: 0},
+  isAcountVerified : {type: Boolean, default: false},
+  resetOtp : {type : String, default: ''},
+  resetOtpExpireAt : {type : Number, default: 0}, 
   createdAt: { type: Date, default: Date.now },
 });
 

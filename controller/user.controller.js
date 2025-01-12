@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const User = require("../module/user.model");
 const asyncWraper = require('../middleware/asyncWraper');
 const { response } = require('express');
+const { sendMail } = require('../config/nodeMailer');
+
 
 
 // Register User
@@ -45,6 +47,24 @@ const registerUser = asyncWraper ( async (req , res ) => {
     // generate and send jwt token
     const token = jwt.sign({ id: newUser._id, email: newUser.email, role: newUser.role }, process.env.JWT_SECRET);
 
+    
+    if(newUser.isAcountVerified) {
+        return res.status(200).json({ message: 'Verification code has already been sent.' });
+    }
+
+    // genarte otp 
+    const otp = String(Math.floor(1000 + Math.random() * 9000));
+    const verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000;
+    
+    // save otp and expireAt in db
+    newUser.verifyOtp = otp;
+    newUser.verifyOtpExpireAt = verifyOtpExpireAt;
+
+    await newUser.save();
+    
+    // send verification email
+    sendMail({to : email, subject : 'Verify your email address' , message :  `Welcom to Deino, your acount has been created white email id: ${email} and verification code is ${otp}`})
+    
     // send response and token
     res.json({
         message: 'User registered successfully.',
@@ -77,6 +97,8 @@ const loginUser = asyncWraper (async (req , res , next ) => {
     // generate and send jwt token
     const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET);
 
+    
+
     // send response and token
     res.json({
         message: 'User logged in successfully.',
@@ -85,10 +107,124 @@ const loginUser = asyncWraper (async (req , res , next ) => {
     });
 })
 
+
+const sendVerifayOtp = asyncWraper (async (req , res ) => {
+
+    const userId = req.user.id
+    console.log(`User ${userId}`);
+
+    const user = await User.findById(userId);
+    if(!user) {
+        return res.status(404).json({ message: 'User not found.' });
+    }
+    if(user.isAcountVerified) {
+        return res.status(200).json({ message: 'Verification code has already been sent.' });
+    }
+
+    //genarte otp code
+    const otp = String(Math.floor(1000 + Math.random() * 9000));
+    
+    // save otp code to user
+    user.verifyOtp = otp;
+    user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000;
+
+    await user.save();
+    //send otp code to user email
+    sendMail({to : user.email, subject : 'Verify your email address' , message :  `Welcom to Deino, your acount has been created white email id: ${user.email} and verification code is ${otp}`})
+
+    res.json({statuS : 'SUCCESS' , message: 'Verification code has been sent.' });
+})
+
+const verifyEmail = asyncWraper (async (req, res) => {
+
+    const userId = req.user.id
+    const { otp } = req.body
+
+    if(!userId || !otp) {
+        return res.status(400).json({statu : 'ERROR' ,message: 'OTP and User ID are required.' });
+    } 
+    const user = await User.findById(userId);
+    if(!user) {
+        return res.status(404).json({ status: 'ERROR' , message: 'User not found.' });
+    }
+
+    if(user.verifyOtp!== otp || user.verifyOtp === '') {
+        return res.status(401).json({ status: 'ERROR' , message: 'Invalid OTP' });
+    }
+    if (user.verifyOtpExpireAt < Date.now()) {
+        return res.status(401).json({ status: 'ERROR' , message: 'OTP Expired.' });
+    }
+
+    user.isAcountVerified = true;
+    user.verifyOtp = '';
+    user.verifyOtpExpireAt = 0;
+
+    await user.save();
+
+    res.json({ status: 'SUCCESS', message: 'Email verified successfully.' });
+})
 // get all users
 const getAllUsers = asyncWraper (async (req, res) => {
     const users = await User.find({} , {__v : false});
     res.json({ status: "SUCCESS", data: { users: users } });
+})
+
+
+// sned rest otp
+const sendResetOtp = asyncWraper (async (req, res) => {
+    const userId = req.user.id
+    const { email } = req.body
+
+    if(!email) {
+        return res.status(400).json({status : "ERROR", message: 'Email is required.' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if(!user) {
+        return res.status(404).json({ status: "ERROR", message: 'Email not found.' });
+    }
+
+    // genarte otp code
+    const otp = String(Math.floor(1000 + Math.random() * 9000));
+    
+    // save otp code to user
+    user.resetOtp = otp;
+    user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
+
+    await user.save();
+    //send otp code to user email
+    sendMail({to : email, subject : 'Reset your password' , message :  `Your reset password code is: ${otp}`})
+
+    res.json({ status: "SUCCESS", message: 'Reset OTP has been sent.' });
+})
+
+
+// reset user password
+
+const resetPassword = asyncWraper (async (req, res) => {
+    const userId = req.user.id
+    const { otp, newPassword , email } = req.body
+
+    if(!otp || !newPassword || !email) {
+        return res.status(400).json({ status : "ERROR", message: 'OTP, Password and Email are required.' });
+    }
+
+    const user = await User.findOne({ email });
+    if(!user) {
+        return res.status(404).json({ status: "ERROR", message: 'Email not found.' });
+    }
+    if(user.resetOtp!== otp || user.resetOtp === '') {
+        return res.status(401).json({ status: "ERROR", message: 'Invalid OTP' });
+    }
+    if (user.resetOtpExpireAt < Date.now()) {
+        return res.status(401).json({ status: "ERROR", message: 'OTP Expired.' });
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetOtp = '';
+    user.resetOtpExpireAt = 0;
+    await user.save();
+    res.json({ status: "SUCCESS", message: 'Password has been reset successfully.' });
 })
 
 // get user by id 
@@ -176,4 +312,6 @@ module.exports = {
     getProfile,
     updateProfile,
     changePassword,
+    sendVerifayOtp,
+    verifyEmail
 }
