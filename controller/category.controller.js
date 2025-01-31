@@ -35,7 +35,7 @@ const getAllCategories = asyncWraper(async (req, res) => {
   const menu = await Menu.findOne({ restaurantId: restaurant._id });
   if (!menu) return res.status(404).json({ message: "Menu not found" });
 
-  const categories = await Category.find({ menuId: menu._id });
+  const categories = await Category.find({ menuId: menu._id }).sort({createdAt: -1});
   res.json({ status: "success", data: { categories } });
 });
 

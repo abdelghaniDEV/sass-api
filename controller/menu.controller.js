@@ -27,20 +27,27 @@ const getAllMenus = asyncWraper(async (req, res) => {
 });
 
 // get menu by ID
-const getSingleMenu = asyncWraper(async (req, res) => {
-  const prams = req.params.menuID;
-  const menu = await Menu.findById(prams)
-    .populate("restaurantId")
-    .populate({
-      path: "products",
-      populate: {
-        path: "categoryId",
-        select: "name menuId",
-      },
-    })
-    .populate("categorys");
-  res.json({ status: "success", data: { menu: menu } });
-});
+  const getSingleMenu = asyncWraper(async (req, res) => {
+    const prams = req.params.menuID;
+    const menu = await Menu.findById(prams)
+      .populate("restaurantId")
+      .populate({
+        path: "products",
+        options: { sort: { createdAt: -1 } },
+        populate: {
+          path: "categoryId",
+          select: "name menuId",
+        },
+      
+      })
+      .populate("categorys");
+
+        // if (menu && menu.products) {
+        //   menu.products = menu.products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        // }
+      
+    res.json({ status: "success", data: { menu: menu } });
+  });
 
 // update menu
 const updateMenu = asyncWraper(async (req, res) => {
@@ -71,12 +78,13 @@ const getMenusByRestaurantId = asyncWraper(async (req, res) => {
     .populate("restaurantId")
     .populate({
       path: "products",
+      options: { sort: { createdAt: -1 } },
       populate: {
         path: "categoryId",
         select: "name menuId",
       },
     })
-    .populate("categorys");
+    .populate("categorys")
   res.json({ status: "SUCCESS", data: { menu: menus } });
 });
 

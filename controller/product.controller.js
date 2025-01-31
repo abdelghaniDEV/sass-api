@@ -54,7 +54,7 @@ const createProductByToken = asyncWraper(async (req, res) => {
 
 // get All Products
 const getAllProducts = asyncWraper(async (req, res) => {
-  const products = await Product.find().populate("menuId").populate("categoryId");
+  const products = await Product.find().sort({ createdAt: -1 }).populate("menuId").populate("categoryId");
   res.json({ status: "success", data: { products: products } });
 });
 

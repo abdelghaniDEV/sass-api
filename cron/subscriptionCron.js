@@ -1,9 +1,9 @@
 const cron = require('node-cron');
-const User = require('../module/user.model'); // استيراد نموذج المستخدم
+const User = require('../module/user.model'); 
 
 const checkExpiredSubscriptions = () => {
   cron.schedule('* * * * *', async () => {
-    console.log('✅ فحص الاشتراكات المنتهية...');
+    console.log('✅ة...');
     const currentDate = new Date();
 
     await User.updateMany(

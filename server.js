@@ -30,12 +30,7 @@ app.use("/api/menus" , menuRouter)
 app.use("/api/products" , productRouter)
 app.use("/api/categories" , categoryRouter)
 
-// cron.schedule('* * * * *', () => {
-//     console.log('📅 هذه الوظيفة تعمل كل دقيقة (للاختبار فقط)');
-//   });
-  
 
-// checkExpiredSubscriptions()
 
 
 
